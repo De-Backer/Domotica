@@ -2,5 +2,5 @@
 # bevat alle project-file's
 #=============================================================================#
 TEMPLATE = subdirs
-SUBDIRS =   AVR QT
+SUBDIRS =   QT AVR
 
