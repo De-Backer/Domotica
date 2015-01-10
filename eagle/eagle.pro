@@ -1,6 +1,6 @@
 #=============================================================================#
-# bevat alle project-file's
+# bevat alle eagle-file's
 #=============================================================================#
 TEMPLATE = subdirs
-SUBDIRS =   QT AVR eagle
+SUBDIRS =  domotica
 
