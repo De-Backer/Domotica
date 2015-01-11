@@ -16,7 +16,6 @@ public:
 
 signals:
     void error(int,QString);
-    void set_text(QString text);
     void zent_data(unsigned char *data,int size);
 
 public slots:

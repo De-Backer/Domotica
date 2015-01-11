@@ -13,6 +13,10 @@
 #include <QThread>
 #include "com_usb.h"
 
+/* USB ************************************************************************/
+#include "../../AVR/Master/define_USB_com.c"
+/*############################################################################*/
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -21,8 +25,6 @@ public:
     MainWindow(QWidget *parent = 0);
     ~MainWindow();
 signals:
-    void start_usb();
-    void test();
     void sent_control_transfer(unsigned char bmrequesttype, //  8 bit (0-255)
                               unsigned char brequest,      //  8 bit (0-255)
                               unsigned int  wvalue,        // 16 bit (0-65535)
@@ -32,13 +34,17 @@ signals:
                               unsigned int  timeout);      // 16 bit (0-65535)
 
 public slots:
-    void get_text(QString text);
     void get_data_usb(unsigned char *data,int size);
 
 private:
+    void setup_Gui();
+    void setup_com_usb();
+
     QMdiArea *mdiarea;
-    QPushButton *Button_stop;
+    QPushButton *Button_connect;
+    QTextEdit *TextEdit_data_USB;
 private slots:
+    void on_Button_ping();
 };
 
 #endif // MAINWINDOW_H
