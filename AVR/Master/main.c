@@ -16,7 +16,6 @@
 #include <avr/wdt.h>
 
 #include "usbdrv.h"
-
 #include <util/delay.h>
 /* com SPI:
  * Master               slave                Master             slave
@@ -131,15 +130,7 @@
 #define BUF_MASK (BUF_LEN - 1)  // 0x08-0x01 =0x07 0b0000 0111
 /*############################################################################*/
 /* USB ************************************************************************/
-#define USB_bRequest_SPI_data       0xF0
-#define USB_bRequest_SPI_status     0xF1
-#define USB_bRequest_SPI_set        0xF2
-
-#define USB_Buffer                  254
-
-/* USB debug SPI **************************************************************/
-#ifdef debug_SPI
-#endif
+#include "define_USB_com.c"
 /*############################################################################*/
 
 /* master SPI buffer in *******************************************************/
@@ -216,7 +207,6 @@ uint8_t in_uit_data[255][17];/*[ingang] [funcie/uitgang]
                               * */
 /*############################################################################*/
 
-
 void SPI_buffer_Write(uint8_t slave,uint8_t var)
 {
 
@@ -231,80 +221,48 @@ void SPI_buffer_Write(uint8_t slave,uint8_t var)
 USB_PUBLIC uchar usbFunctionSetup(uchar data[8]) {
 
     uint8_t temp;
-    temp=USB_Buffer_SPI_debug_pointor;
-    USB_Buffer_SPI_debug_pointor=0;
-    usbMsgPtr = USB_Buffer_SPI_debug;// * zorgt voor fouten (is mimeri var ipv data)
-    return temp;
-//    usbRequest_t *rq = (void *)data; // cast data to correct type
-//    switch(rq->bRequest) { // custom command is in the bRequest field
+    usbRequest_t *rq = (void *)data; // cast data to correct type
+    switch(rq->bRequest) { // custom command is in the bRequest field
 
 
-//    case USB_bRequest_SPI_data:
+    case USB_bRequest_SPI_data://tba
 
-//    case USB_bRequest_SPI_status:
-//        return 0;
+        return 0;
+    case USB_bRequest_SPI_status:
+        USB_Buffer_SPI_debug_pointor=0;
+        for (temp = 0; temp < SPI_aantal_slave; ++temp) {
+            USB_Buffer_SPI_debug[USB_Buffer_SPI_debug_pointor++]=SPI_status[temp];
+        }
+        temp=USB_Buffer_SPI_debug_pointor;
+        USB_Buffer_SPI_debug_pointor=0;
+        usbMsgPtr = USB_Buffer_SPI_debug;// * zorgt voor fouten (is mimeri var ipv data)
+        return temp;
 
-//    case USB_bRequest_SPI_set:/* set SPI */
-//        DDRB |=(1<<PORTB4);         //SS   out
-//        DDRB |=(1<<PORTB5);         //MOSI out
-//        DDRB &=~(1<<PORTB6);        //MISO in
-//        DDRB |=(1<<PORTB7);         //SCK  out
-//        SPCR=rq->wIndex.bytes[0];   //SPI control Register
-//        return 0;
+    case USB_bRequest_SPI_set:/* set SPI */
+        DDRB |=(1<<PORTB4);         //SS   out
+        DDRB |=(1<<PORTB5);         //MOSI out
+        DDRB &=~(1<<PORTB6);        //MISO in
+        DDRB |=(1<<PORTB7);         //SCK  out
+        SPCR=rq->wIndex.bytes[0];   //SPI control Register
+        return 0;
 
-//#ifdef debug_SPI
-////    case USB_bRequest_SPI_debug:
-//        temp=USB_Buffer_SPI_debug_pointor;
-//        USB_Buffer_SPI_debug_pointor=0;
-//        usbMsgPtr = USB_Buffer_SPI_debug;// * zorgt voor fouten (is mimeri var ipv data)
-//        return temp;
-//#endif
+#ifdef debug_SPI
+    case USB_bRequest_SPI_debug:
+        temp=USB_Buffer_SPI_debug_pointor;
+        USB_Buffer_SPI_debug_pointor=0;
+        usbMsgPtr = USB_Buffer_SPI_debug;// * zorgt voor fouten (is mimeri var ipv data)
+        return temp;
+#endif
 
+    case 6:/* data van pc naar µc */
+        dataLength  = (uchar)rq->wLength.word;
+        dataReceived = 0;
 
-//    case 6:/* data van pc naar µc */
-//        dataLength  = (uchar)rq->wLength.word;
-//        dataReceived = 0;
+        if(dataLength  > sizeof(replyBuf)) // limit to buffer size
+            dataLength  = sizeof(replyBuf);
 
-//        if(dataLength  > sizeof(replyBuf)) // limit to buffer size
-//            dataLength  = sizeof(replyBuf);
-
-//        return USB_NO_MSG; // usbFunctionWrite will be called now
-
-//    case 254:
-//    //test info
-//    if(data_pointor==0)
-//    {
-//            /* data naar USB */
-//            replyBuf[data_pointor++]=0xFF;
-//            replyBuf[data_pointor++]=SPI_status[0];
-//            replyBuf[data_pointor++]=SPI_slave_datacont[0];
-//            replyBuf[data_pointor++]=SPI_slave_data_van_slave[0];
-//            replyBuf[data_pointor++]=SPI_received_data_pointor[0];
-//            replyBuf[data_pointor++]=SPI_received_data[0][0];
-//            replyBuf[data_pointor++]=SPI_received_data[0][1];
-//            replyBuf[data_pointor++]=SPI_received_data[0][2];
-//            replyBuf[data_pointor++]=SPI_received_data[0][3];
-//            replyBuf[data_pointor++]=SPI_received_data[0][4];
-//            replyBuf[data_pointor++]=0xFF;
-
-//            replyBuf[data_pointor++]=ring_buffer_head_SPI[0];
-//            replyBuf[data_pointor++]=ring_buffer_tail_SPI[0];
-//            replyBuf[data_pointor++]=ring_buffer_count_SPI[0];
-//            replyBuf[data_pointor++]=0xFF;
-
-//            replyBuf[data_pointor++]=ring_buffer_zent_SPI[0];
-//            replyBuf[data_pointor++]=ring_buffer_receive_SPI[0];
-//            replyBuf[data_pointor++]=ring_buffer_zent_count_SPI[0];
-//            replyBuf[data_pointor++]=0xFF;
-//    }
-
-//        temp=data_pointor;
-//        data_pointor=0;
-//        usbMsgPtr = replyBuf;// * zorgt voor fouten (is mimeri var ipv data)
-//        if(sizeof(replyBuf)>USB_Buffer)
-//            return 1+USB_Buffer;
-//        return temp;
-//    }
+        return USB_NO_MSG; // usbFunctionWrite will be called now
+    }
     return 0; // should not get here
 }
 // This gets called when data is sent from PC to the device
@@ -319,14 +277,6 @@ USB_PUBLIC uchar usbFunctionWrite(uchar *data, uchar len) {
 
 void verwerk_data_slave(uint8_t slave)
 {
-//    uint8_t var;
-
-//    for (var = 0; var < SPI_received_data_pointor[slave]; ++var)
-//    {
-//        /* data naar USB */
-//        replyBuf[data_pointor++]=SPI_received_data[slave][var];
-//    }
-
     if((USB_Buffer_SPI_debug_pointor<248)&&(slave==0))
     {
         /* data naar USB */
@@ -591,7 +541,5 @@ int main()
             SPDR=SPI_slave_data_van_master;             /* Start transmission */
         }
     }
-    //__asm__ __volatile__ ("nop"); //un korte wacht instruksie
-
     return 0;
 }

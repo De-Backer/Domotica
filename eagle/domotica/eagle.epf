@@ -1,0 +1,30 @@
+[Eagle]
+Version="07 01 00"
+Platform="Linux"
+Serial="62191E841E-LSR-WLM-1EL"
+Globals="Globals"
+Desktop="Desktop"
+
+[Globals]
+AutoSaveProject=1
+UsedLibrary="/home/simon/eagle-7.1.0/lbr/atmel.lbr"
+UsedLibrary="/home/simon/eagle-7.1.0/lbr/con-3m.lbr"
+UsedLibrary="/home/simon/eagle-7.1.0/lbr/con-wago255.lbr"
+UsedLibrary="/home/simon/eagle-7.1.0/lbr/led.lbr"
+UsedLibrary="/home/simon/eagle-7.1.0/lbr/optocoupler.lbr"
+UsedLibrary="/home/simon/eagle-7.1.0/lbr/relay.lbr"
+UsedLibrary="/home/simon/eagle/De Backer/libraries/Huishoudelijke elektrische installatie/eendraadsschema.lbr"
+UsedLibrary="/home/simon/eagle/De Backer/libraries/Huishoudelijke elektrische installatie/situatieschema.lbr"
+UsedLibrary="/home/simon/eagle/De Backer/huis_elektrische_installatie/Kanegem 8700 Kanegemstraat 140/domotica/untitled.lbr"
+UsedLibrary="/home/simon/eagle/De Backer/libraries/Huishoudelijke elektrische installatie/situatieschema-zekringkast.lbr"
+UsedLibrary="librarie.lbr"
+
+[Win_1]
+Type="Control Panel"
+Loc="356 0 955 399"
+State=1
+Number=0
+
+[Desktop]
+Screen="2560 1024"
+Window="Win_1"

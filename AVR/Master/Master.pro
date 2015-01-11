@@ -32,6 +32,7 @@ QMAKE_CFLAGS = -Wall -Os -Iusbdrv -mmcu=$${DEVICE} -DF_CPU=$${F_CPU}
 # Source files you need for your project go here.
 INCLUDEPATH =/usr/local/avr/include/
 SOURCES += main.c
+SOURCES += define_USB_com.c
 ##############################################################################
 # Fuse values for particular devices
 ##############################################################################
@@ -60,7 +61,8 @@ SOURCES += usbdrv/*.c
 HEADERS += usbdrv/*.asm
 SOURCES += usbdrv/*.S
 SOURCES += usbdrv/*.inc
-DISTFILES += usbdrv/*.txt
+DISTFILES += usbdrv/*.txt \
+    Makefile
 #_____________________________________________________________________________
 
 contains( PROGRAMMER, ponyser ){

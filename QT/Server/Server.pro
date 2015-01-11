@@ -12,7 +12,8 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    com_usb.cpp
+    com_usb.cpp \
+    ../../AVR/Master/define_USB_com.c
 
 HEADERS  += mainwindow.h \
     com_usb.h

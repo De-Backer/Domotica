@@ -1,6 +1,5 @@
 #=============================================================================#
-# bevat alle project-file's
+# bevat alle images
 #=============================================================================#
-TEMPLATE = subdirs
-SUBDIRS =   QT AVR eagle images
-
+DISTFILES += *.png
+DISTFILES += *.jpg

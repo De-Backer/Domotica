@@ -2,11 +2,6 @@
 
 com_usb::com_usb()
 {
-
-    t_adc.start();
-    number_adc=0;
-    max_cont=10;
-    pionter=0;
     // Initialize libusb
     // This function must be called before calling any other libusb function.
     r = libusb_init(&ctx);
@@ -27,16 +22,61 @@ com_usb::~com_usb()
     libusb_exit(ctx);
 }
 
-void com_usb::get_device_list()
+void com_usb::get_control_transfer(unsigned char bmrequesttype,
+                                   unsigned char brequest,
+                                   unsigned int wvalue,
+                                   unsigned int windex,
+                                   unsigned char *data,
+                                   unsigned int wlength,
+                                   unsigned int timeout)
 {
-    qDebug()<<start();
-}
+    qDebug()<<"get_control_transfer";
 
-void com_usb::get_sent_cont(int var)
-{
-    max_cont=var;
-}
+    libusb_device_handle *dev_handle=NULL; //a device handle
+    //
+    dev_handle = libusb_open_device_with_vid_pid(ctx, 5824, 1500); //these are vendorID and productID I found for my usb device
+    if(dev_handle == NULL)
+    {
+        qDebug()<<"Cannot open device"<<endl;
+        return;
+    }
+    qDebug()<<"Device Opened"<<LIBUSB_API_VERSION;
 
+
+        if(libusb_kernel_driver_active(dev_handle, 0) == 1) { //find out if kernel driver is attached
+            qDebug()<<"Kernel Driver Active";
+            if(libusb_detach_kernel_driver(dev_handle, 0) == 0) //detach it
+                qDebug()<<"Kernel Driver Detached!";
+        }
+        r = libusb_claim_interface(dev_handle, 0); //claim interface 0 (the first) of device (mine had jsut 1)
+        if(r < 0) {
+            qDebug()<<"Cannot Claim Interface";
+            return;
+        }
+        qDebug()<<"Claimed Interface";
+        qDebug()<<"Writing Data...";
+
+        r=libusb_control_transfer(dev_handle,bmrequesttype,brequest,wvalue,windex,data, wlength,timeout);// norm // duurt 10ms
+
+        emit zent_data(data,r);//is trager! 8KByte/s
+        //
+        r = libusb_release_interface(dev_handle, 0); //release the claimed interface
+        if(r!=0) {
+            qDebug()<<"Cannot Release Interface";
+            return;
+        }
+        qDebug()<<"Released Interface";
+    //
+        libusb_close(dev_handle);
+        qDebug()<<"close dev_handle";
+
+
+//    vendor "16C0" 5824
+//    product "05DC" 1500
+//    vendorName "codeandlife.com"
+//    productName "USBexample"
+
+}
 void com_usb::test()
 {
     start();
@@ -44,9 +84,6 @@ void com_usb::test()
 
 int com_usb::start()
 {
-
-    t_adc.restart();
-    number_adc=0;
 
     libusb_device_handle *dev_handle=NULL; //a device handle
     //
@@ -170,78 +207,6 @@ int com_usb::test_com(libusb_device_handle *dev_handle,unsigned char *data)
 
     r=libusb_control_transfer(dev_handle,((0x02 << 5)|0x00|0x80),USB_bRequest_SPI_debug,0,0,data, 255,5000);// norm
     if(r<1)return r;
-//    int ce_data=0;
-//    for (int var = 0; var < r; ++var) {
-//        if(data[var]!=data_b[var])
-//        {
-//            ++ce_data;
-//        }
-//    }
-//    if(ce_data==0)return 0;
-//    for (int var = 0; var <r; ++var)//tba r kan -1 zijn!!
-//    {
-//        data_b[var]=data[var];
-//    }
-//    if(r==11){
-//        qDebug()<<"----------------------------------------------------------------";
-//        qDebug()<<"0xFF_____________________"
-//                <<QString::number(0,10).rightJustified(3,' ')
-//               <<QString::number(data[0],10).rightJustified(3,' ')
-//              <<QString::number(data[0],16).rightJustified(2,' ')
-//             <<QString::number(data[0],2).rightJustified(8,'0');
-//        qDebug()<<"SPI_status_______________"
-//                <<QString::number(1,10).rightJustified(3,' ')
-//               <<QString::number(data[1],10).rightJustified(3,' ')
-//              <<QString::number(data[1],16).rightJustified(2,' ')
-//             <<QString::number(data[1],2).rightJustified(8,'0');
-//        qDebug()<<"SPI_slave_datacont_______"
-//                <<QString::number(2,10).rightJustified(3,' ')
-//               <<QString::number(data[2],10).rightJustified(3,' ')
-//              <<QString::number(data[2],16).rightJustified(2,' ')
-//             <<QString::number(data[2],2).rightJustified(8,'0');
-//        qDebug()<<"SPI_slave_data_van_slave_"
-//                <<QString::number(3,10).rightJustified(3,' ')
-//               <<QString::number(data[3],10).rightJustified(3,' ')
-//              <<QString::number(data[3],16).rightJustified(2,' ')
-//             <<QString::number(data[3],2).rightJustified(8,'0');
-//        qDebug()<<"SPI_received_data_pointor"
-//                <<QString::number(4,10).rightJustified(3,' ')
-//               <<QString::number(data[4],10).rightJustified(3,' ')
-//              <<QString::number(data[4],16).rightJustified(2,' ')
-//             <<QString::number(data[4],2).rightJustified(8,'0');
-//        qDebug()<<"SPI_received_data________"
-//                <<QString::number(5,10).rightJustified(3,' ')
-//               <<QString::number(data[5],10).rightJustified(3,' ')
-//              <<QString::number(data[5],16).rightJustified(2,' ')
-//             <<QString::number(data[5],2).rightJustified(8,'0');
-//        qDebug()<<"SPI_received_data________"
-//                <<QString::number(6,10).rightJustified(3,' ')
-//               <<QString::number(data[6],10).rightJustified(3,' ')
-//              <<QString::number(data[6],16).rightJustified(2,' ')
-//             <<QString::number(data[6],2).rightJustified(8,'0');
-//        qDebug()<<"SPI_received_data________"
-//                <<QString::number(7,10).rightJustified(3,' ')
-//               <<QString::number(data[7],10).rightJustified(3,' ')
-//              <<QString::number(data[7],16).rightJustified(2,' ')
-//             <<QString::number(data[7],2).rightJustified(8,'0');
-//        qDebug()<<"SPI_received_data________"
-//                <<QString::number(8,10).rightJustified(3,' ')
-//               <<QString::number(data[8],10).rightJustified(3,' ')
-//              <<QString::number(data[8],16).rightJustified(2,' ')
-//             <<QString::number(data[8],2).rightJustified(8,'0');
-//        qDebug()<<"SPI_received_data________"
-//                <<QString::number(9,10).rightJustified(3,' ')
-//               <<QString::number(data[9],10).rightJustified(3,' ')
-//              <<QString::number(data[9],16).rightJustified(2,' ')
-//             <<QString::number(data[9],2).rightJustified(8,'0');
-//        qDebug()<<"0xFF_____________________"
-//                <<QString::number(10,10).rightJustified(3,' ')
-//               <<QString::number(data[10],10).rightJustified(3,' ')
-//              <<QString::number(data[10],16).rightJustified(2,' ')
-//             <<QString::number(data[10],2).rightJustified(8,'0');
-//        qDebug()<<"________________________________________________________________";
-
-//    }else {
         qDebug()<<"----------------------------------------------------------------";
         int status=0;
         QString statuslist[5]={" slave                     ",
@@ -308,14 +273,8 @@ int com_usb::test_com(libusb_device_handle *dev_handle,unsigned char *data)
                 status=0;
                 qDebug()<<"";
             }
-//            qDebug()<<r
-//                   <<QString::number(var,10).rightJustified(3,' ')
-//                  <<QString::number(data[var],10).rightJustified(3,' ')
-//                 <<QString::number(data[var],16).rightJustified(2,' ')
-//                <<QString::number(data[var],2).rightJustified(8,'0');
         }
         qDebug()<<"________________________________________________________________";
-//    }
 
 
     return 0;
