@@ -63,7 +63,7 @@
  *
 */
 
-/* de in/uit-gangen verbinen:
+/* de in/uit-gangen verbinen: 1
  * -1 un arraje van 32*3
  * de 32 zijn de ingangen
  * de 3 zijn de uitgangen en funksie
@@ -88,6 +88,40 @@
  *  Byte 2 bit 7 = NC
  * {toggel},{0b010010010},{00001000}
  * is toggel de uitgangen 2,5,8,12
+ **/
+/* de in/uit-gangen verbinen: 2
+ * -1 un arraje van max 500 Byte
+ * voorbeelt:
+ * - uitgang
+ *
+ * Byte 0: funksie [uitgang]
+ * Byte 1: Slaves [S7,S6,S5,S4,S3,S2,S1,S0]
+ * Byte 2 en 3: uitgang Slaves [S0]
+ * kan oplopen tot 17 Byte (18 Byte tot)
+ * Byte 4 en 5:
+ * Byte 6 en 7:
+ * Byte 8 en 9:
+ * Byte 10 en 11:
+ * Byte 12 en 13:
+ * Byte 14 en 15:
+ * Byte 16 en 17:
+ *
+ * -PWM
+ * Byte 0: funksie [PWM] (on, up, down, off, on-down, off-up)
+ * Byte 1: Slaves [S7,S6,S5,S4,S3,S2,S1,S0]
+ * Byte 2: PWM_uitgang Slaves [S0]
+ * kan oplopen tot 9 Byte (10 Byte tot)
+ *
+ * -NC
+ * Byte 0: funksie [NC]
+ *
+ * max numbers:
+ * 32 ingangen
+ *  -18 Byte uitgang
+ *  -10 Byte PWM_uitgang
+ *  -1  Byte NC
+ * => 32*18=576 Byte=> overflow ATMEGA8535 !!!!
+ *
  **/
 /* info Bit manipulation
  * | bit OR
@@ -317,6 +351,8 @@
 #include <avr/wdt.h>
 
 /* debug **********************************************************************/
+/* function that checks Allocated memory to buffer overflow *******************/
+#define debug_CAMTBOF
 /* debug SPI ******************************************************************/
 #define debug_SPI
 /*############################################################################*/
@@ -384,10 +420,32 @@
                                     *
                                     * */
 /*############################################################################*/
+#ifdef debug_CAMTBOF
+uint16_t CAMTBOF_S(int8_t var)
+{
+    static uint16_t CAMTBOF_SRAM=0;
+    CAMTBOF_SRAM+=var;
+    return CAMTBOF_SRAM;
+
+}
+uint16_t CAMTBOF_E(int8_t var)
+{
+    static uint16_t CAMTBOF_EEPROM=0;
+    CAMTBOF_EEPROM+=var;
+    return CAMTBOF_EEPROM;
+
+}
+
+#endif
 uint8_t SPI_status=SPI_heartbeat_slave;
 uint8_t SPI_slave_datacont;
 uint8_t SPI_received_data_pointor;
 uint8_t SPI_received_data[SPI_max_data_slave];
+
+#ifdef debug_CAMTBOF
+CAMTBOF_S(4);
+CAMTBOF_S(SPI_max_data_slave);
+#endif
 
 /* de ring buffer
  * c kk6gm
@@ -489,8 +547,16 @@ uint8_t ring_buffer_zent_SPI=0;
 uint8_t ring_buffer_receive_SPI=0;
 uint8_t ring_buffer_zent_count_SPI=0;
 
+#ifdef debug_CAMTBOF
+CAMTBOF_S(7);
+CAMTBOF_S(BUF_LEN);
+#endif
+
 #ifdef debug_SPI
 uint8_t debug[8];
+#ifdef debug_CAMTBOF
+CAMTBOF_S(9);
+#endif
 #endif
 // 00 rechts links 1111
 //debug[4]=0b00011111;
@@ -562,6 +628,10 @@ uint8_t in_uit_data[32][17];/*[ingang] [funcie/uitgang]
                               *
                               * */
 uint8_t slave=255;/* anders weet de µc niet welke byte's voor wie zijn. */
+#ifdef debug_CAMTBOF
+CAMTBOF_S(544);
+CAMTBOF_S(1);
+#endif
 /*############################################################################*/
 
 void SPI_buffer_Write(uint8_t var)
@@ -603,7 +673,6 @@ void set_output(uint8_t uitgang)
         0x00,0x00, 0x00,0x00,
         0x00,0x00
 };
-
     static const uint8_t port_b[max_uitgang] =
     {
         0x00,0x00, 0x00,0x00, 0x00,0x00, 0x00,0x00, 0x00,0x00, 0x00,0x01, 0x00,0x02, 0x00,0x04,
