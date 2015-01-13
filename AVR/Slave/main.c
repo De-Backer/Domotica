@@ -565,7 +565,168 @@ CAMTBOF_S(9);
 //debug[7]=0b00011111;
 
 /* in/uit-gangen **************************************************************/
-uint8_t in_uit_data[32][17];/*[ingang] [funcie/uitgang]
+/* voorstel de in/uit-gangen verbinen
+ * -1 un arraje van max 500 Byte
+ * funksie
+ *  -[uitgang]
+ *      Slaves [S7,S6,S5,S4,S3,S2,S1,S0]
+ *      Byte 2 en 3: uitgang Slaves [S0]
+ *      kan oplopen tot 17 Byte (18 Byte tot)
+ *  -[PWM]
+ *      Slaves [S7,S6,S5,S4,S3,S2,S1,S0]
+ *      Byte 2: PWM_uitgang Slaves [S0]
+ *      kan oplopen tot 9 Byte (10 Byte tot)
+ *  -NC
+ *
+ **/
+
+/* memory IN/OUT-PUT_Funksie_ */
+#define MIOP_F_NC       0x00 /* doe niets */
+
+#define MIOP_F_OUT_K_ON    0x10 /* zet uitgang aan */
+#define MIOP_F_OUT_K_OF    0x11 /* zet uitgang uit */
+#define MIOP_F_OUT_K_TOG   0x12 /* zet uitgang toggel */
+
+#define MIOP_F_OUT_L1_ON   0x13 /* zet uitgang aan op L1 */
+#define MIOP_F_OUT_L1_OF   0x14 /* zet uitgang uit op L1 */
+#define MIOP_F_OUT_L1_TOG  0x15 /* zet uitgang toggel op L1 */
+
+#define MIOP_F_OUT_L2_ON   0x16 /* zet uitgang aan op L2 */
+#define MIOP_F_OUT_L2_OF   0x17 /* zet uitgang uit op L2 */
+#define MIOP_F_OUT_L2_TOG  0x18 /* zet uitgang toggel op L2 */
+
+#define MIOP_F_OUT_L3_ON   0x19 /* zet uitgang aan op L3 */
+#define MIOP_F_OUT_L3_OF   0x1A /* zet uitgang uit op L3 */
+#define MIOP_F_OUT_L3_TOG  0x1B /* zet uitgang toggel op L3 */
+
+#define MIOP_F_PWM_0    0x20
+#define MIOP_F_PWM_1    0x21
+#define MIOP_F_PWM_2    0x22
+/*
+ * ingang is pin nr in
+ * uitgang geen
+ * verwerking zet uitgang in funsie
+ */
+uint8_t io_memory_slave(uint8_t slave)
+{
+    uint8_t var=0;
+    if(slave&0b00000001)++var; /* Slave 0 */
+    if(slave&0b00000010)++var; /* Slave 1 */
+    if(slave&0b00000100)++var; /* Slave 2 */
+    if(slave&0b00001000)++var; /* Slave 3 */
+    if(slave&0b00010000)++var; /* Slave 4 */
+    if(slave&0b00100000)++var; /* Slave 5 */
+    if(slave&0b01000000)++var; /* Slave 6 */
+    if(slave&0b10000000)++var; /* Slave 7 */
+    return var;
+}
+
+void io_memory(uint8_t pin_nr)
+{
+    static uint8_t pin_nr_data[33];
+    static uint8_t io_data[200];
+    if(pin_nr_data[2]<1)/* test de 2de data moet groter dan 0 zijn ander ...*/
+    {
+        /* .... de pin_nr_data zijn nog niet gemaakt */
+        uint8_t pin_var=0;
+        uint8_t var=0;
+        for (; (var < 201)&(pin_var<34); ++var) {
+            switch (io_data[var]) {
+            case MIOP_F_NC:
+                pin_nr_data[pin_var++]=var;/* plaats waar de funsie staat */
+                break;
+            case MIOP_F_OUT_K_ON:
+            case MIOP_F_OUT_K_OF:
+            case MIOP_F_OUT_K_TOG:
+            case MIOP_F_OUT_L1_ON:
+            case MIOP_F_OUT_L1_OF:
+            case MIOP_F_OUT_L1_TOG:
+            case MIOP_F_OUT_L2_ON:
+            case MIOP_F_OUT_L2_OF:
+            case MIOP_F_OUT_L2_TOG:
+            case MIOP_F_OUT_L3_ON:
+            case MIOP_F_OUT_L3_OF:
+            case MIOP_F_OUT_L3_TOG:
+                pin_nr_data[pin_var++]=var;/* plaats waar de funsie staat */
+                ++var;
+                var += (io_memory_slave(io_data[var]) * 2);        /* slave */
+                /* aantal slave 2 byte */
+                break;
+            case MIOP_F_PWM_0:
+            case MIOP_F_PWM_1:
+            case MIOP_F_PWM_2:
+                pin_nr_data[pin_var++]=var;/* plaats waar de funsie staat */
+                ++var;
+                var += io_memory_slave(io_data[var]);        /* slave */
+                /* aantal slave 1 byte */
+                break;
+            default:/* onbekend! */
+                break;
+            }
+        }
+
+    }
+    switch (io_data[pin_nr_data[pin_nr]]) {
+    case MIOP_F_NC:
+        break;
+
+    case MIOP_F_OUT_K_ON:
+
+        break;
+    case MIOP_F_OUT_K_OF:
+
+        break;
+    case MIOP_F_OUT_K_TOG:
+
+        break;
+
+    case MIOP_F_OUT_L1_ON:
+
+        break;
+    case MIOP_F_OUT_L1_OF:
+
+        break;
+    case MIOP_F_OUT_L1_TOG:
+
+        break;
+
+    case MIOP_F_OUT_L2_ON:
+
+        break;
+    case MIOP_F_OUT_L2_OF:
+
+        break;
+    case MIOP_F_OUT_L2_TOG:
+
+        break;
+
+    case MIOP_F_OUT_L3_ON:
+
+        break;
+    case MIOP_F_OUT_L3_OF:
+
+        break;
+    case MIOP_F_OUT_L3_TOG:
+
+        break;
+
+    case MIOP_F_PWM_0:
+
+        break;
+    case MIOP_F_PWM_1:
+
+        break;
+    case MIOP_F_PWM_2:
+
+        break;
+    default:/* onbekend! */
+        break;
+    }
+
+}
+
+//uint8_t in_uit_data[32][17];
+/*[ingang] [funcie/uitgang]
                               *
                               * [ingang]
                               * 0-255 zij de ingangen
@@ -627,11 +788,11 @@ uint8_t in_uit_data[32][17];/*[ingang] [funcie/uitgang]
                               *           -bij ON naar OFF
                               *
                               * */
-uint8_t slave=255;/* anders weet de µc niet welke byte's voor wie zijn. */
-#ifdef debug_CAMTBOF
-CAMTBOF_S(544);
-CAMTBOF_S(1);
-#endif
+//uint8_t slave=255;/* anders weet de µc niet welke byte's voor wie zijn. */
+//#ifdef debug_CAMTBOF
+//CAMTBOF_S(544);
+//CAMTBOF_S(1);
+//#endif
 /*############################################################################*/
 
 void SPI_buffer_Write(uint8_t var)
