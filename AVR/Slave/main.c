@@ -386,6 +386,7 @@
 
 #define SPI_set_in_uit_data     0x05 /* is voor de in_uit_gangen */
 #define SPI_get_in_uit_data     0x06 /* is voor de in_uit_gangen */
+#define SPI_sent_in_uit_data    0x07 /* is voor de in_uit_gangen */
 
 /* SPI data buffer slave ******************************************************/
 #define SPI_max_data_slave      20 /* max data van slave in een keer
@@ -580,7 +581,9 @@ CAMTBOF_S(9);
  *
  **/
 
-/* memory IN/OUT-PUT_Funksie_ */
+/* memory _function_ */
+#define M_F_SET_output      0x00
+/* memory IN/OUT-PUT_Function_ */
 #define MIOP_F_NC       0x00 /* doe niets */
 
 #define MIOP_F_OUT_K_ON    0x10 /* zet uitgang aan */
@@ -605,7 +608,7 @@ CAMTBOF_S(9);
 /*
  * ingang is pin nr in
  * uitgang geen
- * verwerking zet uitgang in funsie
+ * verwerking zet uitgang in function
  */
 uint8_t io_memory_slave(uint8_t slave)
 {
@@ -621,108 +624,140 @@ uint8_t io_memory_slave(uint8_t slave)
     return var;
 }
 
-void io_memory(uint8_t pin_nr)
+/* io_memory
+ *
+ * function : wat moet er gebueren data in, data varander, uitgang varander
+ * pin_nr   : is de pointer
+*/
+void io_memory(uint8_t function,uint8_t pin_nr)
 {
-    static uint8_t pin_nr_data[33];
-    static uint8_t io_data[200];
-    if(pin_nr_data[2]<1)/* test de 2de data moet groter dan 0 zijn ander ...*/
-    {
-        /* .... de pin_nr_data zijn nog niet gemaakt */
-        uint8_t pin_var=0;
-        uint8_t var=0;
-        for (; (var < 201)&(pin_var<34); ++var) {
-            switch (io_data[var]) {
-            case MIOP_F_NC:
-                pin_nr_data[pin_var++]=var;/* plaats waar de funsie staat */
-                break;
-            case MIOP_F_OUT_K_ON:
-            case MIOP_F_OUT_K_OF:
-            case MIOP_F_OUT_K_TOG:
-            case MIOP_F_OUT_L1_ON:
-            case MIOP_F_OUT_L1_OF:
-            case MIOP_F_OUT_L1_TOG:
-            case MIOP_F_OUT_L2_ON:
-            case MIOP_F_OUT_L2_OF:
-            case MIOP_F_OUT_L2_TOG:
-            case MIOP_F_OUT_L3_ON:
-            case MIOP_F_OUT_L3_OF:
-            case MIOP_F_OUT_L3_TOG:
-                pin_nr_data[pin_var++]=var;/* plaats waar de funsie staat */
-                ++var;
-                var += (io_memory_slave(io_data[var]) * 2);        /* slave */
-                /* aantal slave 2 byte */
-                break;
-            case MIOP_F_PWM_0:
-            case MIOP_F_PWM_1:
-            case MIOP_F_PWM_2:
-                pin_nr_data[pin_var++]=var;/* plaats waar de funsie staat */
-                ++var;
-                var += io_memory_slave(io_data[var]);        /* slave */
-                /* aantal slave 1 byte */
-                break;
-            default:/* onbekend! */
-                break;
-            }
+    static uint8_t pin_nr_data[33];//komt van master
+    static uint8_t io_data[200];//komt van master
+    switch (function) {
+    case SPI_set_in_uit_data://sto data
+        function            = 2;//is voor de for instruksie
+        pin_nr_data[pin_nr] = SPI_received_data[function];//pointer van io_data
+        pin_nr              = SPI_received_data[function];
+        for (; function <= SPI_received_data_pointor;) {
+            io_data[++pin_nr]= SPI_received_data[++function];
+        }
+        break;
+    case SPI_get_in_uit_data://plaats data in ring_buffer_SPI
+
+        switch (io_data[pin_nr_data[pin_nr]]) {
+        case MIOP_F_NC:
+            function=3;//SPI_datacont= SPI_sent_in_uit_data + pin_nr + MIOP_F_NC
+            break;
+
+        case MIOP_F_OUT_K_ON:
+        case MIOP_F_OUT_K_OF:
+        case MIOP_F_OUT_K_TOG:
+        case MIOP_F_OUT_L1_ON:
+        case MIOP_F_OUT_L1_OF:
+        case MIOP_F_OUT_L1_TOG:
+        case MIOP_F_OUT_L2_ON:
+        case MIOP_F_OUT_L2_OF:
+        case MIOP_F_OUT_L2_TOG:
+        case MIOP_F_OUT_L3_ON:
+        case MIOP_F_OUT_L3_OF:
+        case MIOP_F_OUT_L3_TOG:
+            function=pin_nr_data[pin_nr];
+            ++function;
+            function=io_memory_slave(io_data[function]);
+            function*=2;//SPI_datacont
+            break;
+
+        case MIOP_F_PWM_0:
+        case MIOP_F_PWM_1:
+        case MIOP_F_PWM_2:
+            function=pin_nr_data[pin_nr];
+            ++function;
+            function=io_memory_slave(io_data[function]);//SPI_datacont
+            break;
+        default:/* onbekend! */
+            return;/* <-------------------------------------------------------*/
+            break;
         }
 
+        if((ring_buffer_count_SPI+function) < BUF_LEN)/* SPI_buffer controleer de lenkte */
+        {
+            SPI_buffer_Write(function);                    /* SPI_buffer SPI_datacont */
+            SPI_buffer_Write(SPI_sent_in_uit_data);                   /* SPI_buffer data n */
+            SPI_buffer_Write(pin_nr);                   /* SPI_buffer data n */
+            pin_nr;//tba
+            do {
+                SPI_buffer_Write(io_data[pin_nr]);                   /* SPI_buffer data n */
+                --function;
+            } while (function>0);
+            if(SPI_status==SPI_heartbeat_slave)
+            {
+                /* bij data varander van "geen data" naar "data"*/
+                SPI_status=SPI_slave_zent_start;
+            }
+        }
+        break;
+
+    case M_F_SET_output://werking van slave
+        switch (io_data[pin_nr_data[pin_nr]]) {
+        case MIOP_F_NC:
+            break;
+
+        case MIOP_F_OUT_K_ON:
+
+            break;
+        case MIOP_F_OUT_K_OF:
+
+            break;
+        case MIOP_F_OUT_K_TOG:
+
+            break;
+
+        case MIOP_F_OUT_L1_ON:
+
+            break;
+        case MIOP_F_OUT_L1_OF:
+
+            break;
+        case MIOP_F_OUT_L1_TOG:
+
+            break;
+
+        case MIOP_F_OUT_L2_ON:
+
+            break;
+        case MIOP_F_OUT_L2_OF:
+
+            break;
+        case MIOP_F_OUT_L2_TOG:
+
+            break;
+
+        case MIOP_F_OUT_L3_ON:
+
+            break;
+        case MIOP_F_OUT_L3_OF:
+
+            break;
+        case MIOP_F_OUT_L3_TOG:
+
+            break;
+
+        case MIOP_F_PWM_0:
+
+            break;
+        case MIOP_F_PWM_1:
+
+            break;
+        case MIOP_F_PWM_2:
+
+            break;
+        default:/* onbekend! */
+            break;
+        }
+        break;
+    default:// function niet bekend
+        break;
     }
-    switch (io_data[pin_nr_data[pin_nr]]) {
-    case MIOP_F_NC:
-        break;
-
-    case MIOP_F_OUT_K_ON:
-
-        break;
-    case MIOP_F_OUT_K_OF:
-
-        break;
-    case MIOP_F_OUT_K_TOG:
-
-        break;
-
-    case MIOP_F_OUT_L1_ON:
-
-        break;
-    case MIOP_F_OUT_L1_OF:
-
-        break;
-    case MIOP_F_OUT_L1_TOG:
-
-        break;
-
-    case MIOP_F_OUT_L2_ON:
-
-        break;
-    case MIOP_F_OUT_L2_OF:
-
-        break;
-    case MIOP_F_OUT_L2_TOG:
-
-        break;
-
-    case MIOP_F_OUT_L3_ON:
-
-        break;
-    case MIOP_F_OUT_L3_OF:
-
-        break;
-    case MIOP_F_OUT_L3_TOG:
-
-        break;
-
-    case MIOP_F_PWM_0:
-
-        break;
-    case MIOP_F_PWM_1:
-
-        break;
-    case MIOP_F_PWM_2:
-
-        break;
-    default:/* onbekend! */
-        break;
-    }
-
 }
 
 //uint8_t in_uit_data[32][17];
@@ -974,6 +1009,12 @@ void verwerk_data_master()
         break;
     case SPI_set_slave:
         slave=SPI_received_data[1];
+        break;
+    case SPI_set_in_uit_data:
+        io_memory(SPI_set_in_uit_data,SPI_received_data[1]);
+        break;
+    case SPI_get_in_uit_data:
+        ;
         break;
 
     default:// tba zent error

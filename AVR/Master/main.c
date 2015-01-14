@@ -82,6 +82,7 @@
 
 #define SPI_set_in_uit_data     0x05 /* is voor de in_uit_gangen */
 #define SPI_get_in_uit_data     0x06 /* is voor de in_uit_gangen */
+#define SPI_sent_in_uit_data    0x07 /* is voor de in_uit_gangen */
 
 /* SPI data buffer slave ******************************************************/
 #define SPI_max_data_slave      20 /* max data van slave in een keer
