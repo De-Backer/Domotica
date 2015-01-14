@@ -249,6 +249,8 @@ USB_PUBLIC uchar usbFunctionSetup(uchar data[8]) {
 
 #ifdef debug_SPI
     case USB_bRequest_SPI_debug:
+        USB_Buffer_SPI_debug[++USB_Buffer_SPI_debug_pointor]=SPH;
+        USB_Buffer_SPI_debug[++USB_Buffer_SPI_debug_pointor]=SPL;
         temp=USB_Buffer_SPI_debug_pointor;
         USB_Buffer_SPI_debug_pointor=0;
         usbMsgPtr = USB_Buffer_SPI_debug;// * zorgt voor fouten (is mimeri var ipv data)

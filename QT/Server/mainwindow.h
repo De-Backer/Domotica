@@ -45,6 +45,7 @@ private:
     QTextEdit *TextEdit_data_USB;
 private slots:
     void on_Button_ping();
+    void on_Button_debug();
 };
 
 #endif // MAINWINDOW_H

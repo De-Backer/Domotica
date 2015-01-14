@@ -21,7 +21,7 @@ void MainWindow::get_data_usb(unsigned char *data, int size)
     }
     QString txt;
     for (int var = 0; var < size; ++var) {
-        txt.append(buffer[var]);
+        txt.append(QString::number(buffer[var],2).rightJustified(8,'0')+"\n");
     }
     TextEdit_data_USB->append(txt);
 }
@@ -34,14 +34,18 @@ void MainWindow::setup_Gui()
     //usb Gui
     QFormLayout *formlayout =new QFormLayout;
     QPushButton * Button_sent_ping = new QPushButton("ping",this);
+    QPushButton * Button_sent_debug = new QPushButton("debug",this);
     connect(Button_sent_ping, SIGNAL(clicked()),
             this, SLOT(on_Button_ping()));
+    connect(Button_sent_debug, SIGNAL(clicked()),
+            this, SLOT(on_Button_debug()));
     Button_connect = new QPushButton("connect",this);
     TextEdit_data_USB = new QTextEdit(this);
     TextEdit_data_USB->setReadOnly(true);
 
     formlayout->addRow(Button_connect);
     formlayout->addRow(Button_sent_ping);
+    formlayout->addRow(Button_sent_debug);
     formlayout->addRow(TextEdit_data_USB);
 
     QPointer<QGridLayout>GridLayout=new QGridLayout();
@@ -90,4 +94,10 @@ void MainWindow::on_Button_ping()
 {
     unsigned char buffer[256];
     emit sent_control_transfer(((0x02 << 5)|0x00|0x80),USB_bRequest_SPI_status, 0, 8,buffer, sizeof(buffer), 5000);
+}
+
+void MainWindow::on_Button_debug()
+{
+    unsigned char buffer[256];
+    emit sent_control_transfer(((0x02 << 5)|0x00|0x80),USB_bRequest_SPI_debug, 0, 8,buffer, sizeof(buffer), 5000);
 }
