@@ -7,6 +7,8 @@
 #include <QMdiArea>
 #include <QPushButton>
 #include <QTextEdit>
+#include <QLineEdit>
+#include <QComboBox>
 #include <QProgressBar>
 #include <QLabel>
 #include <QFormLayout>
@@ -43,6 +45,12 @@ private:
     QMdiArea *mdiarea;
     QPushButton *Button_connect;
     QTextEdit *TextEdit_data_USB;
+
+    QComboBox *brequest;
+    QLineEdit *wvalue;
+    QLineEdit *windex;
+    QTextEdit *data;
+    QLineEdit *timeout;
 private slots:
     void on_Button_ping();
     void on_Button_debug();

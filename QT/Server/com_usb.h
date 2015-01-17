@@ -21,9 +21,12 @@ signals:
 public slots:
     void test();
     void get_control_transfer(unsigned char bmrequesttype, //  8 bit (0-255)
-                              unsigned char brequest,      //  8 bit (0-255)
-                              unsigned int  wvalue,        // 16 bit (0-65535)
-                              unsigned int  windex,        // 16 bit (0-65535)
+                              //Bits 0:4 determine recipient "libusb_request_recipient"
+                              //Bits 5:6 determine type "libusb_request_type"
+                              //Bit 7 determines data transfer direction "libusb_endpoint_direction"
+                              unsigned char brequest,      //  8 bit (0-255)   data
+                              unsigned int  wvalue,        // 16 bit (0-65535) data
+                              unsigned int  windex,        // 16 bit (0-65535) data
                               unsigned char *data,         //  8 bit data buffer (0-255)
                               unsigned int  wlength,       // 16 bit (0-65535)
                               unsigned int  timeout);      // 16 bit (0-65535)
