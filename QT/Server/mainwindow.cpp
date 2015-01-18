@@ -23,7 +23,8 @@ void MainWindow::get_data_usb(unsigned char *data, int size)
     for (int var = 0; var < size; ++var) {
         txt.append(QString::number(buffer[var],2).rightJustified(8,'0')+"\n");
     }
-    TextEdit_data_USB->append(txt);
+    TextEdit_data_USB->setText(txt);
+    //TextEdit_data_USB->append(txt);
 }
 
 void MainWindow::setup_Gui()
@@ -77,6 +78,14 @@ void MainWindow::setup_Gui()
     debug_widget->setLayout(GridLayout_debug);
     mdiarea->addSubWindow(debug_widget);
     debug_widget->show();
+
+    QPointer<QLabel> debug_label = new QLabel("set slave 0 uitgang 0\n"
+                                              "brequest: USB_bRequest_SPI_data\n"
+                                              "wvalue: 0 =uitgang\n"
+                                              "windex: 0 =slave\n");
+    mdiarea->addSubWindow(debug_label);
+    debug_label->show();
+
 }
 
 void MainWindow::setup_com_usb()
@@ -147,6 +156,7 @@ void MainWindow::on_Button_debug()
         qDebug()<<"."<<buffer[var_buffer]<<".";
         ++var_buffer;
     }
+    qDebug()<<brequest->currentData().toInt()<<wvalue->text().toInt()<<windex->text().toInt();
 
     emit sent_control_transfer(
                 (
@@ -156,7 +166,7 @@ void MainWindow::on_Button_debug()
                     ),
                 brequest->currentData().toInt(), //8bit
                 wvalue->text().toInt(), //16bit
-                windex->text().toInt(), //16bit
+                windex->text().toInt(), //16bit windex->text().toInt()
                 buffer, //8bit arye
                 sizeof(buffer), //16bit
                 5000); //16bit

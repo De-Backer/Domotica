@@ -226,7 +226,23 @@ USB_PUBLIC uchar usbFunctionSetup(uchar data[8]) {
     switch(rq->bRequest) { // custom command is in the bRequest field
 
 
-    case USB_bRequest_SPI_data://tba
+    case USB_bRequest_SPI_data:
+        /* SPI_buffer controleer de lenkte */
+        if((ring_buffer_count_SPI[rq->wIndex.bytes[0]]+2) < BUF_LEN)
+        {
+            /* SPI_buffer SPI_datacont */
+            SPI_buffer_Write(rq->wIndex.bytes[0],0x02);
+            /* SPI_buffer data 0 */
+            SPI_buffer_Write(rq->wIndex.bytes[0],SPI_uitgang);
+            /* SPI_buffer data 1*/
+            SPI_buffer_Write(rq->wIndex.bytes[0],rq->wValue.bytes[0]);
+
+            if(SPI_status[rq->wIndex.bytes[0]]==SPI_heartbeat_master)
+            {
+                //bij data varander van "geen data" naar "data"
+                SPI_status[rq->wIndex.bytes[0]]=SPI_master_zent_start;
+            }
+        }
 
         return 0;
     case USB_bRequest_SPI_status:

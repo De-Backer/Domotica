@@ -55,6 +55,14 @@ void com_usb::get_control_transfer(unsigned char bmrequesttype,
         }
         qDebug()<<"Claimed Interface";
         qDebug()<<"Writing Data...";
+        qDebug()<<"dev_handle   : "<<dev_handle;
+        qDebug()<<"bmrequesttype: "<<bmrequesttype;
+        qDebug()<<"brequest     : "<<brequest;
+        qDebug()<<"wvalue       : "<<wvalue;
+        qDebug()<<"windex       : "<<windex;
+        qDebug()<<"data         : "<<data;
+        qDebug()<<"wlength      : "<<wlength;
+        qDebug()<<"timeout      : "<<timeout;
 
         r=libusb_control_transfer(dev_handle,bmrequesttype,brequest,wvalue,windex,data, wlength,timeout);// norm // duurt 10ms
 
